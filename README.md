@@ -1,6 +1,6 @@
-# LabSeismo
+# LabSeis
 
-LabSeismo is a Python package for analyzing laboratory simulated earthquakes and acoustic emissions, including tools for Coda Wave Interferometry (CWI).
+LabSeis is a Python package for analyzing laboratory simulated earthquakes and acoustic emissions, including tools for Coda Wave Interferometry (CWI).
 
 ## Features
 - Compute windowed time shifts with quadratic interpolation.
