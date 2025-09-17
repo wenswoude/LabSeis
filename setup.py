@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='LabSeismo',
+    name='labseis',
     version='0.1.0',
     description='A package for laboratory simulated earthquakes, acoustic emissions, and Coda Wave Interferometry analysis.',
     author='Wen Zhou',

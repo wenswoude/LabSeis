@@ -1,0 +1,10 @@
+Metadata-Version: 2.1
+Name: LabSeismo
+Version: 0.1.0
+Summary: A package for laboratory simulated earthquakes, acoustic emissions, and Coda Wave Interferometry analysis.
+Author: Wen Zhou
+Author-email: w.zhou@uu.nl
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Dist: numpy
+Requires-Dist: scipy
