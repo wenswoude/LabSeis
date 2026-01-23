@@ -9,7 +9,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         'numpy',
-        'scipy'
+        'scipy',
+        'matplotlib',
         # Add additional dependencies if needed
     ],
     classifiers=[

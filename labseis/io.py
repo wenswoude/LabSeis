@@ -42,9 +42,9 @@ def csv_mmap_read(filename, row_offsets, start_row, num_rows):
     return np.array(selected_rows).T
 
 
-def read_tpc5(f, block):
+def read_tpc5(f, block, traces='A'):
     tmp = tpc5.getVoltageData(f,1,block=block)
-    t = 1000*np.arange(len(tmp))/tpc5.getSampleRate(f,1,block) # time axis in ms
+    t = np.arange(len(tmp))/tpc5.getSampleRate(f,1,block) # time axis in ms
     timestamp = tpc5.getTriggerTime(f,2,block)
 
     AE = np.empty([17,len(tmp)])

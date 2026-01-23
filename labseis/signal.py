@@ -1,7 +1,14 @@
 
 import scipy as sp
+import scipy.signal as sig
+from scipy.signal import butter, filtfilt
+from scipy.interpolate import interp1d
+from scipy.signal import resample
+from scipy.ndimage import gaussian_filter1d
+
 import numpy as np
 import matplotlib.pyplot as plt
+
 
 def bandpass(d_xt, dt, fmin, fmax, order=2):
     '''
@@ -165,3 +172,92 @@ def crosscorrelation_for_timeshift(x_xt, y, dt):
     T    = np.arange(-ns_t+1, ns_t, 1)*dt
 
     return xycorr, T
+
+# def get_piezo_to_velocity_transfer_function(velocity_data, piezo_data, fs):
+#     # Compute transfer function H(f) from calibration data
+#     v = np.asarray(velocity_data).flatten()
+#     p = np.asarray(piezo_data).flatten()
+#     V = np.fft.rfft(v)
+#     P = np.fft.rfft(p)
+#     H = V*P / (P*P + 1e-6)
+#     freqs = np.fft.rfftfreq(len(v), 1/fs).flatten()
+#     return H.squeeze(), freqs.squeeze(), fs
+
+# def get_piezo_to_velocity_transfer_function_cross_spectrum(velocity_data, piezo_data, fs, eps=1e-6):
+#     # Compute transfer function H(f) from calibration data using cross-spectrum method
+#     v = np.asarray(velocity_data).flatten()
+#     p = np.asarray(piezo_data).flatten()
+#     V = np.fft.rfft(v)
+#     P = np.fft.rfft(p)
+#     S_vp = V * np.conj(P)
+#     S_pp = P * np.conj(P)
+#     H = S_vp / (S_pp + eps)
+#     freqs = np.fft.rfftfreq(len(v), 1/fs).flatten()
+#     return H.squeeze(), freqs.squeeze(), fs
+
+def get_piezo_to_velocity_transfer_function_cross_spectrum_welch(velocity_data, piezo_data, fs, nperseg=480000, eps=1e-6):
+    # Compute transfer function H(f) from calibration data using cross-spectrum method with Welch's method
+    v = np.asarray(velocity_data).flatten()
+    p = np.asarray(piezo_data).flatten()
+    f, S_vp = sig.csd(v, p, fs=fs, nperseg=nperseg)
+    f, S_pp = sig.welch(p, fs=fs, nperseg=nperseg)
+    H = S_vp / (S_pp + eps)
+    return H.squeeze(), f.squeeze(), fs
+
+
+
+def apply_transfer_function(new_piezo, H, freqs_H, fs_H, fs_new, filter=True, band=(100, 100000), order=4):
+    # Resample new_piezo if needed
+    if fs_new != fs_H:
+        num_samples = int(len(new_piezo) * fs_H / fs_new)
+        new_piezo = resample(new_piezo, num_samples)
+
+    # FFT of new data
+    P_new = np.fft.rfft(new_piezo)
+    freqs_new = np.fft.rfftfreq(len(new_piezo), 1/fs_H)
+
+    # Interpolate H to new frequency bins
+    H_interp = interp1d(freqs_H, H, bounds_error=False, fill_value='extrapolate')
+    H_new = H_interp(freqs_new)
+
+    # Apply transfer function
+    V_est = P_new * H_new
+
+    # Inverse FFT to get estimated velocity in time domain  
+    velocity_estimated = np.fft.irfft(V_est, n=len(new_piezo))
+
+    # Optional bandpass filter
+    if filter:
+            b, a = butter(order, [band[0]/(fs_new/2), band[1]/(fs_new/2)], btype='band')
+            velocity_estimated = filtfilt(b, a, velocity_estimated)
+
+    return velocity_estimated
+
+# def smooth_transfer_function(H, method='gaussian', width=5):
+#     """
+#     Smooth the transfer function H(f) in the frequency domain.
+#     method: 'gaussian' or 'moving_average'
+#     width: smoothing window width (in frequency bins)
+#     """
+#     if method == 'gaussian':
+#         H_smooth = gaussian_filter1d(H.real, width) + 1j * gaussian_filter1d(H.imag, width)
+#     elif method == 'moving_average':
+#         def moving_average(x, w):
+#             return np.convolve(x, np.ones(w)/w, mode='same')
+#         H_smooth = moving_average(H.real, width) + 1j * moving_average(H.imag, width)
+#     else:
+#         raise ValueError('Unknown smoothing method')
+#     return H_smooth
+
+
+# def smooth_transfer_function_gaussian(H, sigma=2):
+#     """
+#     Smooth the transfer function H using a Gaussian filter.
+#     sigma: standard deviation for Gaussian kernel (in frequency bins)
+#     """
+#     H_amp = np.abs(H)
+#     H_phase = np.angle(H)
+#     H_amp_smooth = gaussian_filter1d(H_amp, sigma)
+#     H_phase_smooth = gaussian_filter1d(H_phase, sigma)
+#     H_smooth = H_amp_smooth * np.exp(1j * H_phase_smooth)
+#     return H_smooth

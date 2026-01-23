@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.signal as sig
 
-def wiggles(xt, t_axis, offset, ax=None, fig=None, scalebar=True, scale=0.5, scale_range='trace', legends=None):
+def wiggles(xt, t_axis, offset, fig=None, ax=None, scalebar=True, scale=0.5, scale_range='trace', legends=None):
     if ax==None:
         fig, ax = plt.subplots(figsize=(10, 5))
-    normalized = np.max(xt)
 
     if scale_range=='trace':
         normalized = np.max(xt, axis=-1)
@@ -30,4 +30,30 @@ def wiggles(xt, t_axis, offset, ax=None, fig=None, scalebar=True, scale=0.5, sca
     #     for i in range(xt.shape[0]):
     #         ax.annotate('{}'.format(legends[i]), xy=[t_axis[-1],offset[i]+0.1])
     
+
+    return fig, ax
+
+
+def plot_waveform(time_axis, data, title, fig=None, ax=None, label=None, xlabel="Time (seconds)", ylabel="Velocity (mm/s)"):
+    # Plot the 1C waveform data
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(time_axis, data, label=label if label else f'{title}')
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend()
+    ax.grid()
+    return ax
+
+def plot_psd(data, sample_frequency, title, fig=None, ax=None, label=None):
+    # Plot the PSD
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    f, Pxx = sig.welch(data, fs=sample_frequency, nperseg=10000)
+    ax.plot(f.T/1000, 10 * np.log10(Pxx), label=label if label else f'{title}')
+    ax.set_ylabel('PSD (dB/Hz)')
+    ax.set_xlabel('Frequency (kHz)')
+    ax.set_title(f'PSD: {title}')
+    ax.grid()
     return fig, ax
