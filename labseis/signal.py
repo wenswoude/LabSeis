@@ -8,6 +8,22 @@ from scipy.ndimage import gaussian_filter1d
 
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.signal import chirp
+
+def generate_linear_chirp(f0, f1, duration, fs=40000):
+    """
+    f0: Starting frequency (Hz)
+    f1: Ending frequency (Hz)
+    duration: Length of the signal (seconds)
+    fs: Sampling rate (Hz)
+    """
+    # Create the time axis
+    t = np.linspace(0, duration, int(fs * duration), endpoint=False)
+    
+    # Generate the linear chirp
+    signal = chirp(t, f0=f0, f1=f1, t1=duration, method='linear')
+    
+    return t, signal
 
 
 def bandpass(d_xt, dt, fmin, fmax, order=2):

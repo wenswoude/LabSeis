@@ -1,9 +1,12 @@
+LICENSE
 README.md
 setup.py
 labseis/__init__.py
 labseis/cwi.py
+labseis/elsys.py
 labseis/io.py
 labseis/signal.py
+labseis/tiepie.py
 labseis/tm.py
 labseis/tpc5.py
 labseis/visual.py

@@ -21,6 +21,7 @@ def getBlockName(channel, block):
     name = '/measurements/00000001/channels/' + channelString + '/blocks/' + blockString + '/'
     return name
 
+
 def getVoltageData(fileRef, channel, block = 1):
     channel_group           = fileRef[getChannelGroupName(channel)]
     dataset_name            = getDataSetName(channel,block)
@@ -37,6 +38,26 @@ def getVoltageData(fileRef, channel, block = 1):
     
     ''' Scale To voltage '''
     return analogData * binToVoltageFactor + binToVoltageConstant
+
+# def a function to read data for limited samples
+
+def getVloltageDataLimited(fileRef, channel, block = 1, start_sample=0, end_sample=None):
+    channel_group           = fileRef[getChannelGroupName(channel)]
+    dataset_name            = getDataSetName(channel,block)
+
+    ''' Get Scaling Parameters '''
+    binToVoltageFactor      = channel_group.attrs['binToVoltFactor']
+    binToVoltageConstant    = channel_group.attrs['binToVoltConstant']
+
+    ''' Get Analog and Digital Mask for Data separation '''
+    analogMask              = channel_group.attrs['analogMask']
+    markerMask              = channel_group.attrs['markerMask']
+
+    analogData              = fileRef[dataset_name][start_sample:end_sample] & analogMask
+    
+    ''' Scale To voltage '''
+    return analogData * binToVoltageFactor + binToVoltageConstant
+
 
 def getPhysicalData(fileRef, channel, block = 1):
     channel_group           = fileRef[getChannelGroupName(channel)]
@@ -81,3 +102,34 @@ def getTriggerTime(fileRef, channel, block = 1):
 def getStartTime(fileRef, channel, block = 1):
     block_group             = fileRef[getBlockName(channel,block)]
     return block_group.attrs['startTime']
+
+def getNumBlocks(fileRef, channel):
+    """Return the number of data blocks available for a given *channel*.
+
+    The HDF5 file layout groups blocks under the path
+    ``/measurements/00000001/channels/<channel>/blocks/``.  Each block is a
+    subgroup named with an eight‑digit zero‑padded integer (e.g. ``00000001``).
+    By accessing the ``blocks`` group and counting its child keys we obtain the
+    total number of blocks for that channel.
+
+    Parameters
+    ----------
+    fileRef: h5py.File
+        Open HDF5 file reference.
+    channel: int
+        Channel identifier.
+
+    Returns
+    -------
+    int
+        Number of block groups for the specified channel. Returns ``0`` if
+        the channel does not contain a ``blocks`` group.
+    """
+    # Construct the path to the ``blocks`` group for the channel.
+    blocks_path = getChannelGroupName(channel) + 'blocks'
+    # Verify the group exists; if not, there are no blocks.
+    if blocks_path not in fileRef:
+        return 0
+    # ``fileRef[blocks_path]`` is an h5py Group; its keys correspond to block
+    # sub‑groups.  The number of keys equals the number of blocks.
+    return len(fileRef[blocks_path].keys())
